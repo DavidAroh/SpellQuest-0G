@@ -33,3 +33,10 @@ dist-ssr
 
 # Large art source files (kept locally, not shipped)
 art-source/
+
+# Video render work dir (large intermediates)
+videos/
+_frames/
+
+# Rendered demo (upload to a host for the submission Video URL)
+SpellQuest-demo.mp4
