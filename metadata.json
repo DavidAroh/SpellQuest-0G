@@ -1,6 +1,6 @@
 {
-  "name": "Gemini Spelling Adventure",
-  "description": "A magical hand-tracked spelling game where Gemini Flash acts as your playful spelling coach.",
+  "name": "SpellQuest AR",
+  "description": "An AR spelling game built on 0G: pinch letter tiles with your hand to spell words, with an on-chain leaderboard and an on-screen AI companion (Spell Sage).",
   "requestFramePermissions": [
     "camera"
   ]
