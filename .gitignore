@@ -30,3 +30,6 @@ dist-ssr
 
 # Claude worktrees (local only)
 .claude/worktrees/
+
+# Large art source files (kept locally, not shipped)
+art-source/
