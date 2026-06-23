@@ -51,8 +51,22 @@ const SHARED_STYLE = `
   .sage-think-dots circle:nth-child(3){ animation-delay:.4s; }
   @keyframes sageDots { 0%,100%{ opacity:.25; } 50%{ opacity:1; } }
   .sage-sprite { width:100%; height:100%; object-fit:contain; transition: opacity .25s ease; }
+  /* sprite "alive" idle: gentle breathing + blink squash */
+  .sage-breathe { width:100%; height:100%; animation: sageBreathe 3.6s ease-in-out infinite; transform-origin:50% 100%; }
+  @keyframes sageBreathe { 0%,100%{ transform: scale(1);} 50%{ transform: scale(1.02);} }
+  .sage-sprite.blink { animation: sageBlinkSquash .17s ease; transform-origin:50% 55%; }
+  @keyframes sageBlinkSquash { 0%{transform:scaleY(1);} 50%{transform:scaleY(.9);} 100%{transform:scaleY(1);} }
+  /* celebrate sparkles around the sprite */
+  .sage-sparkles { position:absolute; inset:0; pointer-events:none; }
+  .sage-sparkles i { position:absolute; font-style:normal; color:#ffd27a; font-size:18px;
+    filter: drop-shadow(0 0 6px rgba(245,166,35,0.8)); animation: sageFloat 1.3s ease-out infinite; }
+  .sage-sparkles i:nth-child(1){ left:6%;  top:30%; animation-delay:0s; }
+  .sage-sparkles i:nth-child(2){ right:4%; top:22%; animation-delay:.35s; }
+  .sage-sparkles i:nth-child(3){ left:18%; top:8%;  animation-delay:.7s; font-size:14px; }
+  @keyframes sageFloat { 0%{ opacity:0; transform: translateY(8px) scale(.4);} 25%{ opacity:1;} 100%{ opacity:0; transform: translateY(-16px) scale(1);} }
   @media (prefers-reduced-motion: reduce) {
-    .sage-bob, .sage-eyes, .sage-star, .sage-spark, .sage-sweat,
+    .sage-bob, .sage-eyes, .sage-star, .sage-spark, .sage-sweat, .sage-breathe,
+    .sage-sprite.blink, .sage-sparkles i,
     .sage-think-dots circle, .sage-celebrate .sage-bob, .sage-worried .sage-bob {
       animation: none !important;
     }
@@ -62,6 +76,24 @@ const SHARED_STYLE = `
 export const SageCharacter: React.FC<Props> = ({ mood, size = 92, onPoke }) => {
   // Which moods have a usable sprite PNG. Empty = SVG fallback everywhere.
   const [sprites, setSprites] = useState<Partial<Record<SageMood, boolean>>>({});
+  const [blink, setBlink] = useState(false);
+
+  // Lifelike random blinking — irregular intervals read as "alive", not robotic.
+  useEffect(() => {
+    let alive = true;
+    let t: ReturnType<typeof setTimeout>;
+    const loop = () => {
+      t = setTimeout(() => {
+        if (!alive) return;
+        setBlink(true);
+        setTimeout(() => alive && setBlink(false), 160);
+        if (Math.random() < 0.3) setTimeout(() => alive && (setBlink(true), setTimeout(() => alive && setBlink(false), 150)), 360); // occasional double-blink
+        loop();
+      }, 2800 + Math.random() * 3600);
+    };
+    loop();
+    return () => { alive = false; clearTimeout(t); };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -100,14 +132,19 @@ export const SageCharacter: React.FC<Props> = ({ mood, size = 92, onPoke }) => {
       <style>{SHARED_STYLE}</style>
 
       {useSprite ? (
-        <div className="sage-bob" style={{ width: "100%", height: "100%" }}>
-          <img
-            key={mood}
-            className="sage-sprite"
-            src={`${SPRITE_DIR}/${mood}.png`}
-            alt={`Spell Sage looking ${mood}`}
-            draggable={false}
-          />
+        <div className="sage-bob" style={{ width: "100%", height: "100%", position: "relative" }}>
+          <div className="sage-breathe">
+            <img
+              key={mood}
+              className={`sage-sprite ${blink ? "blink" : ""}`}
+              src={`${SPRITE_DIR}/${mood}.png`}
+              alt={`Spell Sage looking ${mood}`}
+              draggable={false}
+            />
+          </div>
+          {mood === "celebrate" && (
+            <div className="sage-sparkles" aria-hidden="true"><i>✦</i><i>✦</i><i>✦</i></div>
+          )}
         </div>
       ) : (
         <SageSvg mood={mood} />

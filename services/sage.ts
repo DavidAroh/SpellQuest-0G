@@ -25,6 +25,8 @@ export interface SageContext {
   /** Letters already placed in the tray, in order. */
   traySoFar: string;
   event: SageEvent;
+  /** Consecutive words solved this session (for streak banter). */
+  streak?: number;
 }
 
 const COMPUTE_ENDPOINT: string = (import.meta as any).env?.VITE_OG_COMPUTE_ENDPOINT ?? "";
@@ -79,18 +81,23 @@ function localHint(ctx: SageContext): string {
         `Quick — ${len} letters, starts "${w[0]}", tap +5s if you need it.`,
         `Almost out of time! You've got this.`,
       ]);
-    case "correct":
-      return pick([
-        `Spelled it! On to the next.`,
-        `Perfect — that's how it's done. ✦`,
-        `Crisp spelling. Banking those points.`,
-      ]);
+    case "correct": {
+      const s = ctx.streak ?? 0;
+      if (s >= 5) return pick([`${s} in a row — you're unstoppable! ✦`, `${s} straight! I can barely keep up.`, `On fire — ${s} perfect words!`]);
+      if (s >= 3) return pick([`Hat-trick and counting — ${s} straight! ✦`, `${s} in a row! Keep the combo alive.`, `Three-plus deep. Smooth.`]);
+      if (s === 2) return pick([`Two in a row — nice rhythm!`, `Back-to-back! ✦`]);
+      return pick([`Spelled it! On to the next.`, `Perfect — that's how it's done. ✦`, `Crisp spelling. Banking those points.`, `Boom. Next one's mine to call.`]);
+    }
     case "idle":
     default:
       return pick([
         `Show me your hand and pinch a tile to start.`,
         `Pinch a letter tile to pick it up.`,
         `I'm watching — grab that "${w[0]}" to begin.`,
+        `Still there? Reach for the "${w[0]}". ✦`,
+        `Take your time… I'll wait. Starts with "${w[0]}".`,
+        `Psst — ${len} letters. Pinch to begin.`,
+        `Whenever you're ready. Hint: it's a ${ctx.category.toLowerCase()}.`,
       ]);
   }
 }
@@ -107,6 +114,7 @@ async function inferViaOgCompute(ctx: SageContext): Promise<string> {
     difficulty: ctx.difficulty,
     seconds_left: ctx.timeLeft,
     letters_placed: ctx.traySoFar,
+    streak: ctx.streak ?? 0,
     event: ctx.event,
   });
 

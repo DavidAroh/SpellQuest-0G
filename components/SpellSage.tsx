@@ -56,17 +56,25 @@ export const SpellSage: React.FC<Props> = ({
   const firedTimeLow = useRef(false);
   const firedCorrect = useRef(false);
   const reqId = useRef(0);
+  const streak = useRef(0);            // consecutive words solved
+  const lastActivity = useRef(Date.now()); // for idle chatter
+  const thinkingRef = useRef(false);
 
   const speak = async (event: SageEvent) => {
     if (!enabled || !word) return;
+    lastActivity.current = Date.now();
     const id = ++reqId.current;
     setThinking(true);
+    thinkingRef.current = true;
     setMood("thinking");
-    const text = await getSageHint({ word, category, difficulty, timeLeft, traySoFar, event });
+    const text = await getSageHint({ word, category, difficulty, timeLeft, traySoFar, event, streak: streak.current });
     // Ignore stale responses if a newer request started.
     if (id !== reqId.current) return;
     setThinking(false);
-    setMood(moodForEvent(event));
+    thinkingRef.current = false;
+    // Off-track on progress → worried, otherwise the event's natural mood.
+    const offTrack = event === "progress" && !!traySoFar && !word.toUpperCase().startsWith(traySoFar.toUpperCase());
+    setMood(offTrack ? "worried" : moodForEvent(event));
     setLine(text);
     setPulse(true);
     setTimeout(() => setPulse(false), 600);
@@ -82,6 +90,7 @@ export const SpellSage: React.FC<Props> = ({
   // New word → reset per-word triggers and greet.
   useEffect(() => {
     if (word && word !== prevWord.current) {
+      if (!firedCorrect.current) streak.current = 0; // previous word was missed → streak broken
       prevWord.current = word;
       firedTimeLow.current = false;
       firedCorrect.current = false;
@@ -108,14 +117,26 @@ export const SpellSage: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft]);
 
-  // Win → celebrate (once per word).
+  // Win → celebrate (once per word), bumping the streak first.
   useEffect(() => {
     if (isCorrect && !firedCorrect.current) {
       firedCorrect.current = true;
+      streak.current += 1;
       speak("correct");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCorrect]);
+
+  // Spontaneous idle chatter — if the player goes quiet, the Sage pipes up so it
+  // never feels like a frozen sprite.
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (!enabled || !word || isCorrect || thinkingRef.current) return;
+      if (Date.now() - lastActivity.current > 13000) speak("idle");
+    }, 3000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, word, isCorrect]);
 
   if (!enabled) return null;
 
