@@ -51,8 +51,42 @@ export interface WalletState {
   onOgNetwork: boolean;
 }
 
+// ── Wallet discovery ─────────────────────────────────────────────────────────
+// With several wallet extensions installed they fight over `window.ethereum`,
+// so the last one to load wins — which is often NOT MetaMask, and connecting
+// against it fails ("No active wallet found"). We explicitly hunt for MetaMask
+// using EIP-6963 (the modern multi-wallet standard) first, then the legacy
+// `window.ethereum.providers` array, then fall back to `window.ethereum`.
+
+const eip6963Providers: Array<{ info: any; provider: any }> = [];
+if (typeof window !== "undefined") {
+  window.addEventListener("eip6963:announceProvider", (e: any) => {
+    const detail = e?.detail;
+    if (!detail?.provider) return;
+    const exists = eip6963Providers.some((p) => p.info?.rdns === detail.info?.rdns);
+    if (!exists) eip6963Providers.push(detail);
+  });
+  // Ask installed wallets to announce themselves.
+  window.dispatchEvent(new Event("eip6963:requestProvider"));
+}
+
 function getEthereum(): any {
-  return (window as any).ethereum ?? null;
+  if (typeof window === "undefined") return null;
+  // Re-poll EIP-6963 announcements (they may arrive after first dispatch).
+  window.dispatchEvent(new Event("eip6963:requestProvider"));
+  const mm6963 = eip6963Providers.find(
+    (p) => p.info?.rdns === "io.metamask" || /metamask/i.test(p.info?.name ?? ""),
+  );
+  if (mm6963) return mm6963.provider;
+
+  const eth = (window as any).ethereum;
+  if (!eth) return eip6963Providers[0]?.provider ?? null;
+  // Legacy multi-wallet array.
+  if (Array.isArray(eth.providers) && eth.providers.length) {
+    const mm = eth.providers.find((p: any) => p.isMetaMask);
+    if (mm) return mm;
+  }
+  return eth;
 }
 
 export function hasWallet(): boolean {
