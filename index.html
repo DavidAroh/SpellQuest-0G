@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SpellQuest — AR Spelling Adventure</title>
+    <meta name="description" content="SpellQuest: An augmented reality spelling game. Use hand gestures to drag letter tiles and spell words!" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- DNS pre-connect to speed up CDN requests -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <!-- Pre-warm MediaPipe: create + initialize the Hands model immediately
+         so the WASM download happens in the background while the user is on
+         the menu, rather than after they click Play. -->
+    <script>
+      window.__mpReady = false;
+      function __warmMediaPipe() {
+        if (!window.Hands) { setTimeout(__warmMediaPipe, 100); return; }
+        try {
+          window.__mpHandsWarm = new window.Hands({
+            locateFile: function(f) {
+              return 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/' + f;
+            }
+          });
+          window.__mpHandsWarm.setOptions({
+            maxNumHands: 2,
+            modelComplexity: 0,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5,
+          });
+          // Send a black dummy frame to trigger WASM + model download now
+          window.__mpHandsWarm.onResults(function() { window.__mpReady = true; });
+          var offscreen = document.createElement('canvas');
+          offscreen.width = 1280; offscreen.height = 720;
+          window.__mpHandsWarm.send({ image: offscreen }).catch(function(){});
+        } catch(e) {}
+      }
+      __warmMediaPipe();
+    </script>
+    <style>
+      :root {
+        --sq-void: #08080d;
+        --sq-amber: #f5a623;
+        --sq-amber-glow: rgba(245,166,35,0.32);
+        --sq-text: #f0ece3;
+        --sq-muted: rgba(240,236,227,0.38);
+        --sq-display: 'Bebas Neue', cursive;
+        --sq-body: 'DM Sans', sans-serif;
+      }
+      *, *::before, *::after { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background-color: var(--sq-void);
+        color: var(--sq-text);
+        overflow: hidden;
+        font-family: var(--sq-body);
+      }
+      video { display: none; }
+
+      /* Subtle grain texture over everything */
+      body::before {
+        content: '';
+        position: fixed; inset: 0; z-index: 99998;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+        pointer-events: none;
+        opacity: 0.55;
+      }
+
+      /* Splash */
+      #splash {
+        position: fixed; inset: 0; z-index: 9999;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        background: var(--sq-void);
+        transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        gap: 0;
+      }
+      #splash.hidden { opacity: 0; pointer-events: none; }
+      /* Scanlines on splash */
+      #splash::after {
+        content: '';
+        position: absolute; inset: 0;
+        background: repeating-linear-gradient(
+          0deg, transparent, transparent 2px,
+          rgba(0,0,0,0.13) 2px, rgba(0,0,0,0.13) 4px
+        );
+        pointer-events: none;
+      }
+      .splash-wordmark {
+        font-family: var(--sq-display);
+        font-size: clamp(4rem, 12vw, 8rem);
+        letter-spacing: 0.06em;
+        color: var(--sq-text);
+        line-height: 1;
+        margin-bottom: 0.15em;
+      }
+      .splash-wordmark span {
+        color: var(--sq-amber);
+        text-shadow: 0 0 40px var(--sq-amber-glow), 0 0 80px rgba(245,166,35,0.1);
+      }
+      .splash-sub {
+        font-family: var(--sq-body);
+        font-size: 0.75rem;
+        font-weight: 500;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+        color: var(--sq-muted);
+        margin-bottom: 3rem;
+      }
+      .splash-bar-track {
+        width: 180px; height: 2px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .splash-bar-fill {
+        height: 100%; width: 0%;
+        background: var(--sq-amber);
+        box-shadow: 0 0 10px var(--sq-amber-glow);
+        border-radius: 2px;
+        animation: sq-barfill 1.6s cubic-bezier(0.4,0,0.2,1) forwards;
+      }
+      @keyframes sq-barfill {
+        0%   { width: 0%; opacity: 1; }
+        80%  { width: 100%; opacity: 1; }
+        100% { width: 100%; opacity: 0.4; }
+      }
+      .splash-label {
+        margin-top: 1rem;
+        font-family: var(--sq-body);
+        font-size: 0.68rem;
+        letter-spacing: 0.25em;
+        text-transform: uppercase;
+        color: rgba(245,166,35,0.45);
+        animation: sq-blink 1.2s step-end infinite;
+      }
+      @keyframes sq-blink { 50% { opacity: 0; } }
+
+      /* The app uses tailwindcss-animate utility names (animate-in / fade-in /
+         zoom-in-95) and a custom animate-spin-slow, but the Tailwind CDN build
+         doesn't ship those. Define them here so card entrances actually animate. */
+      @keyframes sq-pop {
+        from { opacity: 0; transform: scale(0.96) translateY(6px); }
+        to   { opacity: 1; transform: scale(1) translateY(0); }
+      }
+      .animate-in { animation: sq-pop 0.28s cubic-bezier(0.22, 1, 0.36, 1); }
+      @keyframes sq-spin-slow { to { transform: rotate(360deg); } }
+      .animate-spin-slow { animation: sq-spin-slow 3s linear infinite; }
+    </style>
+  </head>
+  <body>
+    <!-- Splash screen visible until React mounts -->
+    <div id="splash">
+      <div class="splash-wordmark">Spell<span>Quest</span></div>
+      <div class="splash-sub">AR Spelling Adventure</div>
+      <div class="splash-bar-track"><div class="splash-bar-fill"></div></div>
+      <div class="splash-label">Initialising AR engine&hellip;</div>
+    </div>
+
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+    <script>
+      // Hide splash once React has rendered something meaningful
+      const observer = new MutationObserver(() => {
+        const root = document.getElementById('root');
+        if (root && root.children.length > 0) {
+          observer.disconnect();
+          setTimeout(() => {
+            document.getElementById('splash')?.classList.add('hidden');
+          }, 300);
+        }
+      });
+      observer.observe(document.getElementById('root'), { childList: true, subtree: true });
+    </script>
+  </body>
+</html>

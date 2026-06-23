@@ -1,0 +1,92 @@
+# SpellQuest AR — AI-native on 0G
+
+An augmented-reality spelling game. Hold your hand up to the webcam, **pinch** to grab letter tiles, and drag them into the tray to spell the target word — no controller, mouse, or keyboard needed.
+
+Hand tracking runs entirely in the browser via [MediaPipe Hands](https://developers.google.com/mediapipe). Scores live **on-chain** on the 0G Galileo testnet, and an on-screen **AI agent** coaches you through every word.
+
+## 0G Integration
+
+SpellQuest is built on [0G](https://0g.ai) (Zero Cup 2026):
+
+- **On-chain leaderboard (0G Chain).** Best scores are written to the
+  `SpellQuestLeaderboard` smart contract on the 0G Galileo testnet (chain `16602`).
+  Connect a wallet in-game — no private key ever touches the app — and push your
+  score in one click; the global board is read straight from chain.
+  See [`contracts/`](contracts/) and [`services/zeroG.ts`](services/zeroG.ts).
+- **Spell Sage — an AI agent on 0G Compute.** A persistent on-screen companion
+  (not a chatbot — you never type) that reacts to live game state and coaches
+  you. Its inference is designed for an OpenAI-compatible model served on **0G
+  Compute**, with a built-in local coach as a graceful fallback.
+  See [`services/sage.ts`](services/sage.ts) and [`components/SpellSage.tsx`](components/SpellSage.tsx).
+
+Configure with a `.env.local` (see [`.env.example`](.env.example)). The game runs
+fully offline before anything is configured — the leaderboard degrades to an
+empty board and the Sage uses its local coach.
+
+## Game Modes
+
+| Mode | Description |
+| --- | --- |
+| **Solo Play** | Race the clock to spell words. Beat your high score across 4 categories and 3 difficulty levels. Earn +5s time boosts. |
+| **Local 2P** | Head-to-head on one screen — left hand controls Player 1, right hand Player 2. First to 500 points wins the match. |
+| **Online Battle** | Challenge a friend on another device over a peer-to-peer connection using a shareable room code (powered by PeerJS). |
+
+## Run Locally
+
+**Prerequisites:** Node.js 18+ and a webcam.
+
+```bash
+npm install
+npm run dev
+```
+
+Then open the printed local URL and allow camera access when prompted.
+
+## Build
+
+```bash
+npm run build      # production bundle in dist/
+npm run preview    # preview the production build
+```
+
+## How to Play
+
+1. **Show your hand** to the camera — a glowing cursor follows your index finger.
+2. **Pinch** your thumb and index finger together over a tile to grab it.
+3. **Drag** the pinched tile to the tray and release to drop it.
+4. **Spell the word** in order before the timer runs out to score.
+
+A how-to-play guide is also available in-game via the **?** button, and appears automatically on first launch.
+
+## Tech Stack
+
+- React 19 + TypeScript + Vite
+- MediaPipe Hands (loaded from CDN) for in-browser hand tracking
+- **0G Galileo testnet** for the on-chain leaderboard, via **ethers v6**
+- **0G Compute** (OpenAI-compatible inference) for the Spell Sage AI agent
+- PeerJS for WebRTC peer-to-peer online play
+- Tailwind (CDN) + lucide-react icons
+- Web Audio API for sound effects
+
+## Project Structure
+
+```
+components/
+  SpellingAdventure.tsx    # Solo mode (mounts the Spell Sage agent)
+  MultiplayerAdventure.tsx # Local 2-player mode
+  NetworkMultiplayer.tsx   # Online P2P mode
+  SpellSage.tsx            # On-screen AI companion (agent UI)
+  Leaderboard.tsx          # On-chain leaderboard panel (wallet + scores)
+  HowToPlay.tsx            # Shared onboarding overlay
+  gameCore.ts              # Shared logic: constants, letter pool, sound, persistence
+  wordLists.ts             # Word categories & difficulty tiers
+services/
+  zeroG.ts                 # 0G network config, wallet connect, leaderboard contract
+  sage.ts                  # Spell Sage brain: 0G Compute inference + local fallback
+contracts/
+  SpellQuestLeaderboard.sol # On-chain leaderboard (Solidity)
+  deploy.mjs               # Compile + deploy to 0G Galileo
+  DEPLOY.md                # Deployment guide (Remix or script)
+App.tsx                    # Mode selection menu + leaderboard entry
+types.ts                   # Shared types
+```
