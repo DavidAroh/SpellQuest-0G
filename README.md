@@ -58,6 +58,10 @@ npm run preview    # preview the production build
 
 A how-to-play guide is also available in-game via the **?** button, and appears automatically on first launch.
 
+## Credits
+
+- Spell Sage companion art (optional sprite mode): **sutemo — [Female Character Sprite for Visual Novel](https://sutemo.itch.io/female-character)**. Drop expression PNGs into `public/sage/` to enable it; otherwise the built-in hand-drawn SVG mascot is used. See [`public/sage/README.md`](public/sage/README.md).
+
 ## Tech Stack
 
 - React 19 + TypeScript + Vite
