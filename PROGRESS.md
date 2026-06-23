@@ -10,8 +10,9 @@ and an **on-screen AI agent**.
 ## What’s live on 0G
 
 ### 1. On-chain leaderboard — 0G Chain (Galileo testnet, chain `16602`)
-- Smart contract **`SpellQuestLeaderboard`**, **deployed and Sourcify-verified**.
-  Explorer: `https://chainscan-galileo.0g.ai/address/<CONTRACT_ADDRESS>` _(paste full address)_.
+- Smart contract **`SpellQuestLeaderboard`**, **deployed and Sourcify-verified** at
+  `0xd69dE50009a02d00bb40a4dCaa447C0bDf0AF76C`.
+  Explorer: https://chainscan-galileo.0g.ai/address/0xd69dE50009a02d00bb40a4dCaa447C0bDf0AF76C
 - Players connect a wallet in-game (no private key ever touches the app), and
   best scores are written on-chain; the global board is read straight from chain.
 - **Frictionless UX:** scores **auto-submit when you leave a solo session** (one
@@ -48,4 +49,4 @@ React 19 · TypeScript · Vite · MediaPipe Hands · **0G Galileo testnet** (eth
 ## Links
 - Repo: `<GITHUB_URL>`
 - Demo video: `<VIDEO_URL>`
-- Contract: `https://chainscan-galileo.0g.ai/address/<CONTRACT_ADDRESS>`
+- Contract: `https://chainscan-galileo.0g.ai/address/0xd69dE50009a02d00bb40a4dCaa447C0bDf0AF76C`

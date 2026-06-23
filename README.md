@@ -13,6 +13,7 @@ SpellQuest is built on [0G](https://0g.ai) (Zero Cup 2026):
   Connect a wallet in-game — no private key ever touches the app — and push your
   score in one click; the global board is read straight from chain.
   See [`contracts/`](contracts/) and [`services/zeroG.ts`](services/zeroG.ts).
+  Deployed + verified at [`0xd69dE50009a02d00bb40a4dCaa447C0bDf0AF76C`](https://chainscan-galileo.0g.ai/address/0xd69dE50009a02d00bb40a4dCaa447C0bDf0AF76C).
 - **Spell Sage — an AI agent on 0G Compute.** A persistent on-screen companion
   (not a chatbot — you never type) that reacts to live game state and coaches
   you. Its inference is designed for an OpenAI-compatible model served on **0G
