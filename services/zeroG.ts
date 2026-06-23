@@ -251,6 +251,34 @@ export async function submitScore(name: string, score: number): Promise<string> 
   return tx.hash;
 }
 
+// Remember the player's board name so they never retype it.
+const NAME_KEY = "spellquestPlayerName";
+export function loadPlayerName(): string {
+  try { return localStorage.getItem(NAME_KEY) ?? ""; } catch { return ""; }
+}
+export function savePlayerName(name: string): void {
+  try { localStorage.setItem(NAME_KEY, name); } catch {}
+}
+
+/** Poll the leaderboard on an interval; returns an unsubscribe fn. Reads are
+ *  free (no signature), so this keeps the board live without user action. */
+export function subscribeLeaderboard(
+  onUpdate: (entries: LeaderboardEntry[]) => void,
+  intervalMs = 10000,
+  limit = 10,
+): () => void {
+  let stopped = false;
+  const tick = async () => {
+    try {
+      const e = await fetchLeaderboard(limit);
+      if (!stopped) onUpdate(e);
+    } catch {}
+  };
+  tick();
+  const id = setInterval(tick, intervalMs);
+  return () => { stopped = true; clearInterval(id); };
+}
+
 export function txUrl(hash: string): string {
   return `${OG_TESTNET.explorer}/tx/${hash}`;
 }

@@ -1,16 +1,48 @@
 import React, { useState } from 'react';
-import { Trophy } from 'lucide-react';
+import { Trophy, Loader2, CheckCircle2, ExternalLink } from 'lucide-react';
 import SpellingAdventure from './components/SpellingAdventure';
 import { MultiplayerAdventure } from './components/MultiplayerAdventure';
 import { NetworkMultiplayer } from './components/NetworkMultiplayer';
 import Leaderboard from './components/Leaderboard';
+import {
+  LEADERBOARD_ADDRESS,
+  getConnectedState,
+  submitScore,
+  loadPlayerName,
+  shortAddress,
+  txUrl,
+} from './services/zeroG';
 
 type Mode = "MENU" | "SINGLE" | "MULTI" | "NETWORK";
+type Toast = { status: 'submitting' | 'success' | 'error'; txHash?: string; msg?: string };
 
 const App: React.FC = () => {
   const [mode, setMode] = useState<Mode>("MENU");
   const [showBoard, setShowBoard] = useState(false);
   const [lastScore, setLastScore] = useState(0);
+  const [toast, setToast] = useState<Toast | null>(null);
+
+  // Leaving a solo session → auto-submit the session best on-chain (one wallet
+  // confirm, name remembered). Only when a wallet is already connected on 0G;
+  // otherwise we stay quiet so non-web3 players aren't nagged.
+  const exitToMenu = async () => {
+    const wasSolo = mode === "SINGLE";
+    const score = lastScore;
+    setMode("MENU");
+    if (!wasSolo || score <= 0 || !LEADERBOARD_ADDRESS) return;
+    try {
+      const st = await getConnectedState();
+      if (!st || !st.onOgNetwork) return; // not connected → user can submit manually
+      setToast({ status: 'submitting' });
+      const name = loadPlayerName() || shortAddress(st.address);
+      const hash = await submitScore(name, score);
+      setToast({ status: 'success', txHash: hash });
+      setTimeout(() => setToast(null), 6000);
+    } catch (e: any) {
+      setToast({ status: 'error', msg: e?.shortMessage ?? e?.message ?? 'Submit cancelled.' });
+      setTimeout(() => setToast(null), 5000);
+    }
+  };
 
   // ── Design tokens ────────────────────────────────────────────────────────
   const T = {
@@ -56,6 +88,31 @@ const App: React.FC = () => {
       delay: '180ms',
     },
   ] as const;
+
+  const toastEl = toast && (
+    <div
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[300] flex items-center gap-3 rounded-2xl px-5 py-3.5 shadow-2xl border backdrop-blur-md animate-in"
+      style={{
+        background: 'rgba(8,8,13,0.92)',
+        borderColor: toast.status === 'error' ? 'rgba(248,113,113,0.4)' : 'rgba(245,166,35,0.4)',
+        color: '#f0ece3', fontFamily: "'DM Sans', sans-serif",
+      }}
+    >
+      {toast.status === 'submitting' && <Loader2 size={18} className="animate-spin" style={{ color: '#f5a623' }} />}
+      {toast.status === 'success' && <CheckCircle2 size={18} style={{ color: '#34d399' }} />}
+      <div className="text-sm font-semibold">
+        {toast.status === 'submitting' && 'Saving your score to 0G… confirm in your wallet'}
+        {toast.status === 'success' && 'Score saved on-chain!'}
+        {toast.status === 'error' && (toast.msg || 'Could not submit score.')}
+      </div>
+      {toast.status === 'success' && toast.txHash && (
+        <a href={txUrl(toast.txHash)} target="_blank" rel="noreferrer"
+          className="flex items-center gap-1 text-xs font-bold" style={{ color: '#34d399' }}>
+          View tx <ExternalLink size={12} />
+        </a>
+      )}
+    </div>
+  );
 
   if (mode === "MENU") {
     return (
@@ -300,6 +357,7 @@ const App: React.FC = () => {
         {showBoard && (
           <Leaderboard pendingScore={lastScore} onClose={() => setShowBoard(false)} />
         )}
+        {toastEl}
       </div>
     );
   }
@@ -321,7 +379,7 @@ const App: React.FC = () => {
         </button>
         <button
           className="bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-full shadow-xl font-bold text-sm transition-all hover:scale-105 active:scale-95 border-2 border-red-400/50 backdrop-blur-sm"
-          onClick={() => setMode("MENU")}
+          onClick={exitToMenu}
         >
           ✕ Exit Game
         </button>
@@ -330,6 +388,7 @@ const App: React.FC = () => {
       {showBoard && (
         <Leaderboard pendingScore={lastScore} onClose={() => setShowBoard(false)} />
       )}
+      {toastEl}
     </div>
   );
 };

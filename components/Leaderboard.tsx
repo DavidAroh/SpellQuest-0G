@@ -20,10 +20,13 @@ import {
   disconnectWallet,
   getConnectedState,
   fetchLeaderboard,
+  subscribeLeaderboard,
   submitScore,
   shortAddress,
   addressUrl,
   txUrl,
+  loadPlayerName,
+  savePlayerName,
 } from "../services/zeroG";
 
 interface Props {
@@ -39,7 +42,7 @@ export const Leaderboard: React.FC<Props> = ({ onClose, pendingScore = 0 }) => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastTx, setLastTx] = useState<string | null>(null);
-  const [name, setName] = useState("");
+  const [name, setName] = useState(loadPlayerName);
   const [wallets, setWallets] = useState<WalletOption[]>([]);
   const [picking, setPicking] = useState(false);
 
@@ -58,7 +61,9 @@ export const Leaderboard: React.FC<Props> = ({ onClose, pendingScore = 0 }) => {
 
   useEffect(() => {
     getConnectedState().then((w) => w && setWallet(w)).catch(() => {});
-    refresh();
+    // Live board: poll the contract every 10s while the panel is open (reads are free).
+    const unsub = subscribeLeaderboard((e) => { setEntries(e); setLoading(false); }, 10000, 10);
+    return unsub;
   }, []);
 
   const onConnect = async (rdns?: string) => {
@@ -91,6 +96,7 @@ export const Leaderboard: React.FC<Props> = ({ onClose, pendingScore = 0 }) => {
     setLastTx(null);
     setBusy(true);
     try {
+      if (name.trim()) savePlayerName(name.trim());
       const hash = await submitScore(name || shortAddress(wallet!.address), pendingScore);
       setLastTx(hash);
       await refresh();
