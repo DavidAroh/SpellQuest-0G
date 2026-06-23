@@ -1,31 +1,33 @@
 /**
  * @license SPDX-License-Identifier: Apache-2.0
  *
- * Compile + deploy SpellQuestLeaderboard.sol to the 0G Galileo testnet.
+ * Deploy SpellQuestLeaderboard to the 0G Galileo testnet.
+ * Uses the prebuilt artifact (contracts/artifacts/SpellQuestLeaderboard.json),
+ * so it needs only `ethers` (already installed) — no solc, no Hardhat.
  *
- *   1. Put a funded testnet key in .env.local:  OG_DEPLOYER_PRIVATE_KEY=0x...
- *   2. npm i -D solc
+ *   1. Get test 0G from https://faucet.0g.ai to your wallet.
+ *   2. Put that wallet's key in .env.local:  OG_DEPLOYER_PRIVATE_KEY=0x...
  *   3. node contracts/deploy.mjs
+ *
+ * To recompile the artifact after editing the .sol: `npm i -D solc` then see
+ * contracts/DEPLOY.md (or just deploy via Remix).
  */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createRequire } from "node:module";
-import { Wallet, JsonRpcProvider, ContractFactory } from "ethers";
+import { Wallet, JsonRpcProvider, ContractFactory, formatEther } from "ethers";
 
-const require = createRequire(import.meta.url);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const RPC = "https://evmrpc-testnet.0g.ai";
 const EXPLORER = "https://chainscan-galileo.0g.ai";
 
-// Load OG_DEPLOYER_PRIVATE_KEY from .env.local / .env without extra deps.
+// Load OG_DEPLOYER_PRIVATE_KEY from env or .env.local / .env (no extra deps).
 function loadEnvKey() {
-  if (process.env.OG_DEPLOYER_PRIVATE_KEY) return process.env.OG_DEPLOYER_PRIVATE_KEY;
+  if (process.env.OG_DEPLOYER_PRIVATE_KEY) return process.env.OG_DEPLOYER_PRIVATE_KEY.trim();
   for (const f of [".env.local", ".env"]) {
     try {
-      const txt = readFileSync(join(__dirname, "..", f), "utf8");
-      const m = txt.match(/^OG_DEPLOYER_PRIVATE_KEY=(.+)$/m);
+      const m = readFileSync(join(__dirname, "..", f), "utf8").match(/^OG_DEPLOYER_PRIVATE_KEY=(.+)$/m);
       if (m) return m[1].trim();
     } catch {}
   }
@@ -34,38 +36,36 @@ function loadEnvKey() {
 
 async function main() {
   const pk = loadEnvKey();
-  if (!pk) throw new Error("Set OG_DEPLOYER_PRIVATE_KEY in .env.local first.");
+  if (!pk) throw new Error("Set OG_DEPLOYER_PRIVATE_KEY in .env.local (a funded 0G testnet key).");
 
-  const solc = require("solc");
-  const source = readFileSync(join(__dirname, "SpellQuestLeaderboard.sol"), "utf8");
-  const input = {
-    language: "Solidity",
-    sources: { "SpellQuestLeaderboard.sol": { content: source } },
-    settings: { outputSelection: { "*": { "*": ["abi", "evm.bytecode.object"] } } },
-  };
-  const out = JSON.parse(solc.compile(JSON.stringify(input)));
-  if (out.errors?.some((e) => e.severity === "error")) {
-    throw new Error(out.errors.map((e) => e.formattedMessage).join("\n"));
-  }
-  const c = out.contracts["SpellQuestLeaderboard.sol"].SpellQuestLeaderboard;
+  const artifact = JSON.parse(
+    readFileSync(join(__dirname, "artifacts", "SpellQuestLeaderboard.json"), "utf8"),
+  );
 
   const provider = new JsonRpcProvider(RPC);
   const wallet = new Wallet(pk, provider);
   console.log("Deployer:", wallet.address);
 
-  const factory = new ContractFactory(c.abi, c.evm.bytecode.object, wallet);
+  const balance = await provider.getBalance(wallet.address);
+  console.log("Balance: ", formatEther(balance), "0G");
+  if (balance === 0n) {
+    throw new Error("Wallet has 0 0G — fund it at https://faucet.0g.ai first.");
+  }
+
+  console.log("Deploying SpellQuestLeaderboard…");
+  const factory = new ContractFactory(artifact.abi, artifact.bytecode, wallet);
   const contract = await factory.deploy();
   await contract.waitForDeployment();
   const addr = await contract.getAddress();
 
   console.log("\n✅ Deployed SpellQuestLeaderboard");
-  console.log("   Address:", addr);
-  console.log("   Explorer:", `${EXPLORER}/address/${addr}`);
-  console.log("\nAdd this to .env.local then restart the dev server:");
+  console.log("   Address:  ", addr);
+  console.log("   Explorer: ", `${EXPLORER}/address/${addr}`);
+  console.log("\nNext: add this line to .env.local, then rebuild/redeploy the app:");
   console.log(`   VITE_OG_LEADERBOARD_ADDRESS=${addr}`);
 }
 
 main().catch((e) => {
-  console.error(e);
+  console.error("\n❌", e.shortMessage || e.message || e);
   process.exit(1);
 });
