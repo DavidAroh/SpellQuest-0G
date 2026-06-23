@@ -8,11 +8,13 @@
  * coaches the player out loud. It is NOT a chat box: the player never types.
  * The Sage watches live game state (new word, progress, low time, a win) and
  * speaks on its own, powered by services/sage.ts (0G Compute when configured,
- * local heuristics otherwise).
+ * local heuristics otherwise). The face is an anime-style SVG mascot
+ * (components/SageCharacter) whose expression tracks the game; tap it to ask
+ * for a fresh hint.
  */
 import React, { useEffect, useRef, useState } from "react";
-import { Sparkles } from "lucide-react";
 import { getSageHint, usingOgCompute, SageEvent } from "../services/sage";
+import SageCharacter, { SageMood } from "./SageCharacter";
 
 interface Props {
   word: string;
@@ -22,6 +24,17 @@ interface Props {
   traySoFar: string;
   isCorrect: boolean;
   enabled?: boolean;
+}
+
+function moodForEvent(event: SageEvent): SageMood {
+  switch (event) {
+    case "correct": return "celebrate";
+    case "timeLow": return "worried";
+    case "newWord": return "happy";
+    case "progress": return "happy";
+    case "idle":
+    default: return "idle";
+  }
 }
 
 export const SpellSage: React.FC<Props> = ({
@@ -35,6 +48,7 @@ export const SpellSage: React.FC<Props> = ({
 }) => {
   const [line, setLine] = useState("Show your hand and pinch a tile to begin.");
   const [thinking, setThinking] = useState(false);
+  const [mood, setMood] = useState<SageMood>("idle");
   const [pulse, setPulse] = useState(false);
 
   const prevWord = useRef(word);
@@ -47,13 +61,22 @@ export const SpellSage: React.FC<Props> = ({
     if (!enabled || !word) return;
     const id = ++reqId.current;
     setThinking(true);
+    setMood("thinking");
     const text = await getSageHint({ word, category, difficulty, timeLeft, traySoFar, event });
     // Ignore stale responses if a newer request started.
     if (id !== reqId.current) return;
     setThinking(false);
+    setMood(moodForEvent(event));
     setLine(text);
     setPulse(true);
     setTimeout(() => setPulse(false), 600);
+  };
+
+  // Tap the mascot → fresh contextual hint.
+  const poke = () => {
+    if (isCorrect) speak("correct");
+    else if (traySoFar.length > 0) speak("progress");
+    else speak("idle");
   };
 
   // New word → reset per-word triggers and greet.
@@ -97,59 +120,60 @@ export const SpellSage: React.FC<Props> = ({
   if (!enabled) return null;
 
   return (
-    <div className="absolute bottom-5 left-5 z-40 flex items-end gap-3 max-w-[min(80vw,360px)] pointer-events-none">
-      {/* Avatar orb */}
-      <div className="relative shrink-0">
-        <div
-          className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-xl border border-amber-300/40 transition-transform duration-300 ${
-            pulse ? "scale-110" : "scale-100"
-          }`}
-          style={{
-            background: "linear-gradient(135deg, rgba(245,166,35,0.95), rgba(255,196,80,0.9))",
-            boxShadow: "0 0 24px rgba(245,166,35,0.45)",
-          }}
-        >
-          <Sparkles className={`w-7 h-7 text-white ${thinking ? "animate-spin-slow" : ""}`} />
-        </div>
-        {/* live status dot */}
-        <span
-          className="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-[#08080d]"
-          style={{ background: usingOgCompute ? "#34d399" : "#f5a623" }}
-          title={usingOgCompute ? "Powered by 0G Compute" : "Local coach (0G Compute ready)"}
-        />
+    <div className="absolute bottom-4 left-4 z-40 flex items-end gap-2 max-w-[min(82vw,380px)] pointer-events-none">
+      {/* Anime mascot — interactive: tap for a fresh hint */}
+      <div className="shrink-0 pointer-events-auto" style={{ filter: "drop-shadow(0 6px 14px rgba(0,0,0,0.35))" }}>
+        <SageCharacter mood={mood} onPoke={poke} size={88} />
       </div>
 
       {/* Speech bubble */}
       <div
-        className={`rounded-2xl rounded-bl-sm px-4 py-3 backdrop-blur-md border transition-all duration-300 ${
-          pulse ? "translate-y-0 opacity-100" : "opacity-95"
+        className={`relative mb-2 rounded-2xl rounded-bl-sm px-4 py-3 backdrop-blur-md border transition-all duration-300 ${
+          pulse ? "translate-y-0 opacity-100 scale-[1.02]" : "opacity-95 scale-100"
         }`}
         style={{
-          background: "rgba(8,8,13,0.82)",
-          borderColor: "rgba(245,166,35,0.25)",
+          background: "rgba(8,8,13,0.85)",
+          borderColor: "rgba(245,166,35,0.28)",
           color: "#f0ece3",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
         }}
       >
+        {/* little tail toward the mascot */}
+        <span
+          className="absolute -left-1.5 bottom-3 w-3 h-3 rotate-45"
+          style={{ background: "rgba(8,8,13,0.85)", borderLeft: "1px solid rgba(245,166,35,0.28)", borderBottom: "1px solid rgba(245,166,35,0.28)" }}
+        />
         <div className="flex items-center gap-2 mb-1">
-          <span
-            className="text-[10px] font-bold uppercase tracking-[0.2em]"
-            style={{ color: "#f5a623" }}
-          >
+          <span className="text-[11px] font-bold uppercase tracking-[0.2em]" style={{ color: "#f5a623" }}>
             Spell Sage
           </span>
           <span
-            className="text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded-full"
+            className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full inline-flex items-center gap-1"
             style={{
-              color: usingOgCompute ? "#34d399" : "rgba(240,236,227,0.5)",
+              color: usingOgCompute ? "#34d399" : "rgba(240,236,227,0.55)",
               background: usingOgCompute ? "rgba(52,211,153,0.12)" : "rgba(255,255,255,0.06)",
             }}
           >
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: usingOgCompute ? "#34d399" : "#f5a623" }} />
             {usingOgCompute ? "0G Compute" : "AI Coach"}
           </span>
         </div>
-        <p className="text-sm font-medium leading-snug">
-          {thinking ? "…" : line}
+        <p className="text-sm font-medium leading-snug min-h-[1.25rem]">
+          {thinking ? (
+            <span className="inline-flex gap-1 items-center" aria-label="thinking">
+              <span className="sage-typing">●</span>
+              <span className="sage-typing" style={{ animationDelay: ".15s" }}>●</span>
+              <span className="sage-typing" style={{ animationDelay: ".3s" }}>●</span>
+            </span>
+          ) : (
+            line
+          )}
         </p>
+        <style>{`
+          .sage-typing { font-size:8px; color:#f5a623; opacity:.3; animation: sageTyping 1.2s infinite; }
+          @keyframes sageTyping { 0%,100%{ opacity:.3; transform: translateY(0);} 50%{ opacity:1; transform: translateY(-2px);} }
+          @media (prefers-reduced-motion: reduce){ .sage-typing{ animation:none; } }
+        `}</style>
       </div>
     </div>
   );
