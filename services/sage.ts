@@ -31,7 +31,7 @@ export interface SageContext {
 
 const COMPUTE_ENDPOINT: string = (import.meta as any).env?.VITE_OG_COMPUTE_ENDPOINT ?? "";
 const COMPUTE_KEY: string = (import.meta as any).env?.VITE_OG_COMPUTE_API_KEY ?? "";
-const COMPUTE_MODEL: string = (import.meta as any).env?.VITE_OG_COMPUTE_MODEL ?? "llama-3.3-70b-instruct";
+const COMPUTE_MODEL: string = (import.meta as any).env?.VITE_OG_COMPUTE_MODEL ?? "Qwen2.5-Omni";
 
 export const usingOgCompute = !!COMPUTE_ENDPOINT;
 
