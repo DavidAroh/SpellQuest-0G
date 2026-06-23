@@ -7,7 +7,7 @@
  * straight from chain, and push their best score on-chain in one click.
  */
 import React, { useEffect, useState } from "react";
-import { Trophy, Crown, Loader2, ExternalLink, Wallet, X } from "lucide-react";
+import { Trophy, Crown, Loader2, ExternalLink, Wallet, X, LogOut } from "lucide-react";
 import {
   OG_TESTNET,
   LEADERBOARD_ADDRESS,
@@ -17,6 +17,7 @@ import {
   hasWallet,
   listWallets,
   connectWallet,
+  disconnectWallet,
   getConnectedState,
   fetchLeaderboard,
   submitScore,
@@ -75,6 +76,14 @@ export const Leaderboard: React.FC<Props> = ({ onClose, pendingScore = 0 }) => {
     } catch (e: any) {
       setError(e?.message ?? "Could not connect wallet.");
     }
+  };
+
+  const onDisconnect = async () => {
+    await disconnectWallet();
+    setWallet(null);
+    setPicking(false);
+    setLastTx(null);
+    setError(null);
   };
 
   const onSubmit = async () => {
@@ -150,9 +159,19 @@ export const Leaderboard: React.FC<Props> = ({ onClose, pendingScore = 0 }) => {
                   {shortAddress(wallet.address)}
                 </a>
               </div>
-              <span className="text-[11px] uppercase tracking-wider" style={{ color: wallet.onOgNetwork ? "#34d399" : "#f87171" }}>
-                {wallet.onOgNetwork ? "0G Network" : "Wrong network"}
-              </span>
+              <div className="flex items-center gap-2.5">
+                <span className="text-[11px] uppercase tracking-wider" style={{ color: wallet.onOgNetwork ? "#34d399" : "#f87171" }}>
+                  {wallet.onOgNetwork ? "0G Network" : "Wrong network"}
+                </span>
+                <button
+                  onClick={onDisconnect}
+                  title="Disconnect wallet"
+                  className="flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition hover:scale-105 active:scale-95"
+                  style={{ background: "rgba(248,113,113,0.12)", color: "#fca5a5", border: "1px solid rgba(248,113,113,0.25)" }}
+                >
+                  <LogOut className="w-3 h-3" /> Disconnect
+                </button>
+              </div>
             </div>
           ) : picking ? (
             <div className="rounded-xl px-3 py-3 space-y-2" style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${T.border}` }}>

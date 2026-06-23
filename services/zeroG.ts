@@ -173,6 +173,21 @@ export async function connectWallet(rdns?: string): Promise<WalletState> {
   };
 }
 
+/** Disconnect for this session. Wallets can't be force-logged-out by a dApp,
+ *  but we clear our chosen provider and best-effort revoke the account
+ *  permission so the next connect re-prompts the wallet chooser. */
+export async function disconnectWallet(): Promise<void> {
+  const eth = activeProvider;
+  activeProvider = null;
+  if (eth?.request) {
+    try {
+      await eth.request({ method: "wallet_revokePermissions", params: [{ eth_accounts: {} }] });
+    } catch {
+      // Not all wallets support revokePermissions — clearing local state is enough.
+    }
+  }
+}
+
 /** Read the current connection without prompting (for restoring state on load). */
 export async function getConnectedState(): Promise<WalletState | null> {
   const eth = getEthereum();
