@@ -51,46 +51,71 @@ export interface WalletState {
   onOgNetwork: boolean;
 }
 
-// ── Wallet discovery ─────────────────────────────────────────────────────────
+// ── Wallet discovery (multi-wallet safe) ─────────────────────────────────────
 // With several wallet extensions installed they fight over `window.ethereum`,
-// so the last one to load wins — which is often NOT MetaMask, and connecting
-// against it fails ("No active wallet found"). We explicitly hunt for MetaMask
-// using EIP-6963 (the modern multi-wallet standard) first, then the legacy
-// `window.ethereum.providers` array, then fall back to `window.ethereum`.
+// so the last one to load wins and connecting against it can fail ("No active
+// wallet found"). We discover every wallet via EIP-6963 (the modern multi-wallet
+// standard) so the player can pick which one to use, and remember their choice.
 
-const eip6963Providers: Array<{ info: any; provider: any }> = [];
+export interface WalletOption {
+  rdns: string;
+  name: string;
+  icon: string;
+  provider: any;
+}
+
+const eip6963Providers: WalletOption[] = [];
+let activeProvider: any = null; // the wallet the player chose for this session
+
 if (typeof window !== "undefined") {
   window.addEventListener("eip6963:announceProvider", (e: any) => {
     const detail = e?.detail;
-    if (!detail?.provider) return;
-    const exists = eip6963Providers.some((p) => p.info?.rdns === detail.info?.rdns);
-    if (!exists) eip6963Providers.push(detail);
+    if (!detail?.provider || !detail?.info?.rdns) return;
+    if (eip6963Providers.some((p) => p.rdns === detail.info.rdns)) return;
+    eip6963Providers.push({
+      rdns: detail.info.rdns,
+      name: detail.info.name ?? detail.info.rdns,
+      icon: detail.info.icon ?? "",
+      provider: detail.provider,
+    });
   });
-  // Ask installed wallets to announce themselves.
   window.dispatchEvent(new Event("eip6963:requestProvider"));
+}
+
+/** All wallets the browser advertises. Re-polls EIP-6963 each call. */
+export function listWallets(): WalletOption[] {
+  if (typeof window === "undefined") return [];
+  window.dispatchEvent(new Event("eip6963:requestProvider"));
+  if (eip6963Providers.length) return eip6963Providers;
+  // Fallback: legacy injected provider(s) with no EIP-6963 support.
+  const eth = (window as any).ethereum;
+  if (!eth) return [];
+  const legacy: any[] = Array.isArray(eth.providers) && eth.providers.length ? eth.providers : [eth];
+  return legacy.map((p, i) => ({
+    rdns: p.isMetaMask ? "io.metamask" : `injected-${i}`,
+    name: p.isMetaMask ? "MetaMask" : "Injected Wallet",
+    icon: "",
+    provider: p,
+  }));
+}
+
+/** Pick a wallet for the session (by rdns). Call before connectWallet(). */
+export function selectWallet(rdns: string): void {
+  const found = listWallets().find((w) => w.rdns === rdns);
+  if (found) activeProvider = found.provider;
 }
 
 function getEthereum(): any {
-  if (typeof window === "undefined") return null;
-  // Re-poll EIP-6963 announcements (they may arrive after first dispatch).
-  window.dispatchEvent(new Event("eip6963:requestProvider"));
-  const mm6963 = eip6963Providers.find(
-    (p) => p.info?.rdns === "io.metamask" || /metamask/i.test(p.info?.name ?? ""),
-  );
-  if (mm6963) return mm6963.provider;
-
-  const eth = (window as any).ethereum;
-  if (!eth) return eip6963Providers[0]?.provider ?? null;
-  // Legacy multi-wallet array.
-  if (Array.isArray(eth.providers) && eth.providers.length) {
-    const mm = eth.providers.find((p: any) => p.isMetaMask);
-    if (mm) return mm;
-  }
-  return eth;
+  if (activeProvider) return activeProvider;
+  const wallets = listWallets();
+  // Default to MetaMask if present, else the first wallet, else legacy injected.
+  const mm = wallets.find((w) => w.rdns === "io.metamask" || /metamask/i.test(w.name));
+  const chosen = (mm ?? wallets[0])?.provider ?? null;
+  return chosen ?? (typeof window !== "undefined" ? (window as any).ethereum ?? null : null);
 }
 
 export function hasWallet(): boolean {
-  return !!getEthereum();
+  return listWallets().length > 0 || !!(typeof window !== "undefined" && (window as any).ethereum);
 }
 
 export function shortAddress(addr: string): string {
@@ -127,8 +152,10 @@ export async function ensureOgNetwork(): Promise<void> {
   }
 }
 
-/** Prompt the wallet to connect and ensure it's pointed at 0G. */
-export async function connectWallet(): Promise<WalletState> {
+/** Prompt the wallet to connect and ensure it's pointed at 0G.
+ *  Pass an rdns (from listWallets) to use a specific wallet. */
+export async function connectWallet(rdns?: string): Promise<WalletState> {
+  if (rdns) selectWallet(rdns);
   const eth = getEthereum();
   if (!eth) throw new Error("No browser wallet detected. Install MetaMask to play on-chain.");
 

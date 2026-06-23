@@ -13,7 +13,9 @@ import {
   LEADERBOARD_ADDRESS,
   LeaderboardEntry,
   WalletState,
+  WalletOption,
   hasWallet,
+  listWallets,
   connectWallet,
   getConnectedState,
   fetchLeaderboard,
@@ -37,6 +39,8 @@ export const Leaderboard: React.FC<Props> = ({ onClose, pendingScore = 0 }) => {
   const [error, setError] = useState<string | null>(null);
   const [lastTx, setLastTx] = useState<string | null>(null);
   const [name, setName] = useState("");
+  const [wallets, setWallets] = useState<WalletOption[]>([]);
+  const [picking, setPicking] = useState(false);
 
   const configured = !!LEADERBOARD_ADDRESS;
 
@@ -56,10 +60,18 @@ export const Leaderboard: React.FC<Props> = ({ onClose, pendingScore = 0 }) => {
     refresh();
   }, []);
 
-  const onConnect = async () => {
+  const onConnect = async (rdns?: string) => {
     setError(null);
+    // More than one wallet and none chosen yet → let the player pick.
+    const found = listWallets();
+    if (!rdns && found.length > 1) {
+      setWallets(found);
+      setPicking(true);
+      return;
+    }
     try {
-      setWallet(await connectWallet());
+      setPicking(false);
+      setWallet(await connectWallet(rdns));
     } catch (e: any) {
       setError(e?.message ?? "Could not connect wallet.");
     }
@@ -142,9 +154,30 @@ export const Leaderboard: React.FC<Props> = ({ onClose, pendingScore = 0 }) => {
                 {wallet.onOgNetwork ? "0G Network" : "Wrong network"}
               </span>
             </div>
+          ) : picking ? (
+            <div className="rounded-xl px-3 py-3 space-y-2" style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${T.border}` }}>
+              <p className="text-[11px] uppercase tracking-wider px-1" style={{ color: T.muted }}>
+                Choose a wallet
+              </p>
+              {wallets.map((w) => (
+                <button
+                  key={w.rdns}
+                  onClick={() => onConnect(w.rdns)}
+                  className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 transition hover:scale-[1.01] active:scale-95"
+                  style={{ background: "rgba(255,255,255,0.05)", color: T.text, border: `1px solid ${T.border}` }}
+                >
+                  {w.icon ? (
+                    <img src={w.icon} alt="" className="w-6 h-6 rounded" />
+                  ) : (
+                    <Wallet className="w-5 h-5" style={{ color: T.amber }} />
+                  )}
+                  <span className="text-sm font-semibold">{w.name}</span>
+                </button>
+              ))}
+            </div>
           ) : (
             <button
-              onClick={onConnect}
+              onClick={() => onConnect()}
               className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3 font-bold transition hover:scale-[1.01] active:scale-95"
               style={{ background: T.amber, color: T.void }}
             >
