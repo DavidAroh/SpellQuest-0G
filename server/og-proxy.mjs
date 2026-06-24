@@ -13,7 +13,7 @@
  *   2. In .env.local:  OG_COMPUTE_API_KEY=sk-...        (kept server-side)
  *   3. node server/og-proxy.mjs        (or: npm run og:proxy)
  *   4. In .env.local:  VITE_OG_COMPUTE_ENDPOINT=http://localhost:8787
- *      VITE_OG_COMPUTE_MODEL=Qwen2.5-Omni   (testnet chat model; copy exact id from /models)
+ *      VITE_OG_COMPUTE_MODEL=qwen2.5-omni   (testnet chat model id for Qwen2.5-Omni)
  *   5. Restart `npm run dev`. The Sage badge turns green ("0G Compute").
  */
 import http from "node:http";

@@ -34,7 +34,7 @@ Compute Router** via the bundled proxy (keeps your key off the client and avoids
    ```
    OG_COMPUTE_API_KEY=<your key>           # server-side, never bundled
    VITE_OG_COMPUTE_ENDPOINT=http://localhost:8787
-   VITE_OG_COMPUTE_MODEL=Qwen2.5-Omni      # the testnet chat model (copy exact id from /models)
+   VITE_OG_COMPUTE_MODEL=qwen2.5-omni      # testnet chat model id (Qwen2.5-Omni)
    ```
 3. Run the proxy alongside the app:
    ```bash
