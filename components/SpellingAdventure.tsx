@@ -358,7 +358,7 @@ const SpellingAdventure: React.FC<SpellingAdventureProps> = ({ onScoreChange }) 
       ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
       ctx.restore();
 
-      ctx.fillStyle = "rgba(255, 255, 255, 0.88)";
+      ctx.fillStyle = "rgba(8, 8, 13, 0.82)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       let handPos: Point | null = null;
@@ -751,9 +751,9 @@ const SpellingAdventure: React.FC<SpellingAdventureProps> = ({ onScoreChange }) 
 
   // Calculate timer color based on time left
   const getTimerColor = () => {
-    if (timeLeft > 20) return "text-green-600 border-green-300";
-    if (timeLeft > 10) return "text-yellow-600 border-yellow-300";
-    return "text-red-600 border-red-300 animate-pulse";
+    if (timeLeft > 20) return "text-emerald-300 border-emerald-400/40";
+    if (timeLeft > 10) return "text-[#f5a623] border-amber-400/40";
+    return "text-red-300 border-red-400/50 animate-pulse";
   };
 
   const dismissHowTo = () => {
@@ -762,29 +762,30 @@ const SpellingAdventure: React.FC<SpellingAdventureProps> = ({ onScoreChange }) 
   };
 
   return (
-    <div className="flex w-full h-[100dvh] bg-gradient-to-br from-blue-50 to-purple-50 overflow-hidden font-roboto relative">
+    <div className="flex w-full h-[100dvh] bg-[#08080d] overflow-hidden font-['DM_Sans',sans-serif] relative">
       {showHowTo && <HowToPlay mode="solo" onClose={dismissHowTo} />}
 
       {/* Settings Modal */}
       {showSettings && (
-        <div className="absolute inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200">
-          <div className="bg-white p-8 rounded-[38px] shadow-2xl max-w-sm w-full mx-6 transition-all scale-100">
+        <div className="absolute inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200">
+          <div className="bg-[#0c0c12]/95 backdrop-blur-md p-8 rounded-3xl shadow-2xl border border-amber-500/20 max-w-sm w-full mx-6 transition-all scale-100">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-black text-gray-800 flex items-center gap-2">
-                <Settings className="w-6 h-6 text-blue-500" /> Settings
+              <h2 className="text-3xl text-[#f0ece3] flex items-center gap-2.5 tracking-wide" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
+                <Settings className="w-6 h-6 text-[#f5a623]" /> Settings
               </h2>
               <button
                 onClick={() => setShowSettings(false)}
-                className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition"
+                aria-label="Close settings"
+                className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition border border-white/10"
               >
-                <CheckCircle2 className="w-6 h-6 text-gray-600" />
+                <CheckCircle2 className="w-6 h-6 text-[#f5a623]" />
               </button>
             </div>
 
             <div className="space-y-6">
               {/* Difficulty */}
               <div>
-                <p className="text-xs uppercase font-bold text-gray-400 tracking-wider mb-2">
+                <p className="text-[11px] uppercase font-bold text-[#f0ece3]/40 tracking-[0.2em] mb-2">
                   Difficulty
                 </p>
                 <div className="flex gap-2">
@@ -792,7 +793,7 @@ const SpellingAdventure: React.FC<SpellingAdventureProps> = ({ onScoreChange }) 
                     <button
                       key={d}
                       onClick={() => setDifficulty(d)}
-                      className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${difficulty === d ? "bg-blue-600 text-white shadow-lg scale-105" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
+                      className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${difficulty === d ? "bg-[#f5a623] text-[#08080d] shadow-lg shadow-amber-500/20 scale-105" : "bg-white/5 text-[#f0ece3]/55 hover:bg-white/10 border border-white/5"}`}
                     >
                       {DIFFICULTY_SETTINGS[d].label}
                     </button>
@@ -802,7 +803,7 @@ const SpellingAdventure: React.FC<SpellingAdventureProps> = ({ onScoreChange }) 
 
               {/* Category */}
               <div>
-                <p className="text-xs uppercase font-bold text-gray-400 tracking-wider mb-2">
+                <p className="text-[11px] uppercase font-bold text-[#f0ece3]/40 tracking-[0.2em] mb-2">
                   Word Category
                 </p>
                 <div className="grid grid-cols-2 gap-2">
@@ -810,7 +811,7 @@ const SpellingAdventure: React.FC<SpellingAdventureProps> = ({ onScoreChange }) 
                     <button
                       key={c}
                       onClick={() => setCategory(c)}
-                      className={`py-2 rounded-xl text-[11px] font-black transition-all uppercase tracking-wide ${category === c ? "bg-purple-600 text-white shadow-lg" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
+                      className={`py-2.5 rounded-xl text-[11px] font-black transition-all uppercase tracking-wide ${category === c ? "bg-[#f5a623] text-[#08080d] shadow-lg shadow-amber-500/20" : "bg-white/5 text-[#f0ece3]/55 hover:bg-white/10 border border-white/5"}`}
                     >
                       {c}
                     </button>
@@ -820,12 +821,12 @@ const SpellingAdventure: React.FC<SpellingAdventureProps> = ({ onScoreChange }) 
 
               {/* Sound */}
               <div>
-                <p className="text-xs uppercase font-bold text-gray-400 tracking-wider mb-2">
+                <p className="text-[11px] uppercase font-bold text-[#f0ece3]/40 tracking-[0.2em] mb-2">
                   Sound
                 </p>
                 <button
                   onClick={() => setSoundEnabled(!soundEnabled)}
-                  className={`w-full py-3 rounded-xl flex items-center justify-center gap-2 font-bold transition-all ${soundEnabled ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
+                  className={`w-full py-3 rounded-xl flex items-center justify-center gap-2 font-bold transition-all border ${soundEnabled ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" : "bg-red-500/10 text-red-300 border-red-500/30"}`}
                 >
                   {soundEnabled ? (
                     <Volume2 className="w-5 h-5" />
@@ -837,7 +838,7 @@ const SpellingAdventure: React.FC<SpellingAdventureProps> = ({ onScoreChange }) 
               </div>
             </div>
 
-            <div className="mt-8 text-center text-xs text-gray-400 font-medium">
+            <div className="mt-8 text-center text-[11px] text-[#f0ece3]/35 font-medium">
               Adjusting difficulty will restart the current word.
             </div>
           </div>
@@ -852,16 +853,16 @@ const SpellingAdventure: React.FC<SpellingAdventureProps> = ({ onScoreChange }) 
         <canvas ref={canvasRef} className="absolute inset-0" />
 
         {/* Header */}
-        <div className="absolute top-6 left-6 z-40 flex items-center gap-4">
-          <div className="bg-white/95 backdrop-blur-md p-4 rounded-[28px] shadow-xl border border-blue-100 flex items-center gap-4">
-            <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-3 rounded-2xl shadow-md">
-              <Sparkles className="w-6 h-6 text-white" />
+        <div className="absolute top-6 left-6 z-40 flex items-center gap-3">
+          <div className="bg-[#0c0c12]/85 backdrop-blur-md p-3.5 rounded-2xl shadow-xl border border-amber-500/20 flex items-center gap-3.5">
+            <div className="bg-[#f5a623] p-3 rounded-xl shadow-md shadow-amber-500/30">
+              <Sparkles className="w-6 h-6 text-[#08080d]" />
             </div>
             <div>
-              <h1 className="text-xl font-black text-gray-800 tracking-tight">
+              <h1 className="text-2xl text-[#f0ece3] tracking-wide leading-none" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
                 Spelling Adventure
               </h1>
-              <p className="text-[11px] text-blue-600 font-bold flex items-center gap-1 uppercase tracking-wider">
+              <p className="text-[11px] text-[#f5a623] font-bold flex items-center gap-1 uppercase tracking-[0.18em] mt-1">
                 <MousePointer2 className="w-3 h-3" /> Pinch to spell!
               </p>
             </div>
@@ -869,44 +870,45 @@ const SpellingAdventure: React.FC<SpellingAdventureProps> = ({ onScoreChange }) 
 
           <button
             onClick={() => setShowSettings(!showSettings)}
-            className="bg-white/95 p-3 rounded-full shadow-lg hover:shadow-xl transition-all group border border-gray-100 active:scale-95"
+            aria-label="Settings"
+            className="bg-[#0c0c12]/85 backdrop-blur-md p-3 rounded-full shadow-lg hover:bg-[#15151d] transition-all group border border-amber-500/20 active:scale-95"
           >
             <Settings
-              className={`w-6 h-6 text-gray-600 transition-transform duration-700 ${showSettings ? "rotate-180" : ""}`}
+              className={`w-6 h-6 text-[#f0ece3]/80 transition-transform duration-700 ${showSettings ? "rotate-180" : ""}`}
             />
           </button>
 
           <button
             onClick={() => setShowHowTo(true)}
-            title="How to play"
-            className="bg-white/95 p-3 rounded-full shadow-lg hover:shadow-xl transition-all border border-gray-100 active:scale-95"
+            aria-label="How to play"
+            className="bg-[#0c0c12]/85 backdrop-blur-md p-3 rounded-full shadow-lg hover:bg-[#15151d] transition-all border border-amber-500/20 active:scale-95"
           >
-            <HelpCircle className="w-6 h-6 text-gray-600" />
+            <HelpCircle className="w-6 h-6 text-[#f0ece3]/80" />
           </button>
         </div>
 
         {/* Score & Timer & High Score */}
         <div className="absolute top-6 right-6 z-40 flex flex-col items-end gap-3">
-          <div className="flex gap-3">
-            <div className="bg-yellow-100/90 backdrop-blur-md px-4 py-2 rounded-[20px] shadow-lg border border-yellow-200 flex items-center gap-2">
-              <Crown className="w-4 h-4 text-yellow-600" />
+          <div className="flex gap-3 items-stretch">
+            <div className="bg-[#0c0c12]/85 backdrop-blur-md px-4 py-2 rounded-2xl shadow-lg border border-amber-500/20 flex items-center gap-2">
+              <Crown className="w-4 h-4 text-[#f5a623]" />
               <div className="flex flex-col items-end">
-                <span className="text-[10px] uppercase font-bold text-yellow-600 leading-none">
+                <span className="text-[10px] uppercase font-bold text-[#f5a623]/80 leading-none tracking-wider">
                   Best
                 </span>
-                <span className="text-sm font-black text-yellow-700 leading-none">
+                <span className="text-sm font-black text-[#f0ece3] leading-none mt-1 tabular-nums">
                   {highScore}
                 </span>
               </div>
             </div>
 
-            <div className="bg-white/95 backdrop-blur-md p-4 rounded-[28px] shadow-xl border border-purple-100 flex items-center gap-3">
-              <Trophy className="w-6 h-6 text-yellow-500" />
+            <div className="bg-[#0c0c12]/85 backdrop-blur-md px-5 py-3 rounded-2xl shadow-xl border border-amber-500/20 flex items-center gap-3">
+              <Trophy className="w-6 h-6 text-[#f5a623]" />
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">
+                <p className="text-[10px] text-[#f0ece3]/45 uppercase tracking-[0.18em] font-bold">
                   Score
                 </p>
-                <p className="text-2xl font-black text-gray-800">{score}</p>
+                <p className="text-2xl font-black text-[#f0ece3] leading-tight tabular-nums">{score}</p>
               </div>
             </div>
           </div>
@@ -914,14 +916,14 @@ const SpellingAdventure: React.FC<SpellingAdventureProps> = ({ onScoreChange }) 
           {!isCorrect && (
             <div className="flex flex-col items-end gap-2">
               <div
-                className={`bg-white/95 backdrop-blur-md p-4 rounded-[28px] shadow-xl border-2 flex items-center gap-3 transition-colors duration-500 ${getTimerColor()}`}
+                className={`bg-[#0c0c12]/85 backdrop-blur-md px-5 py-3 rounded-2xl shadow-xl border flex items-center gap-3 transition-colors duration-500 ${getTimerColor()}`}
               >
                 <Clock className="w-6 h-6" />
                 <div>
-                  <p className="text-xs uppercase tracking-wider font-medium opacity-80">
+                  <p className="text-[10px] uppercase tracking-[0.18em] font-bold opacity-70">
                     Time
                   </p>
-                  <p className="text-2xl font-black font-mono">{timeLeft}s</p>
+                  <p className="text-2xl font-black font-mono tabular-nums">{timeLeft}s</p>
                 </div>
               </div>
               {/* +5s boost button */}
@@ -929,13 +931,13 @@ const SpellingAdventure: React.FC<SpellingAdventureProps> = ({ onScoreChange }) 
                 onClick={addTime}
                 disabled={addTimeCount >= MAX_ADD_TIME}
                 title={addTimeCount >= MAX_ADD_TIME ? "Max boosts used" : "Add 5 seconds"}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-black shadow-lg transition-all active:scale-95 ${
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-black shadow-lg transition-all active:scale-95 border ${
                   addTimeCount >= MAX_ADD_TIME
-                    ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-60"
-                    : "bg-gradient-to-r from-green-400 to-emerald-500 text-white hover:shadow-xl hover:scale-105"
+                    ? "bg-white/5 text-[#f0ece3]/30 border-white/5 cursor-not-allowed"
+                    : "bg-emerald-500/15 text-emerald-300 border-emerald-400/40 hover:bg-emerald-500/25 hover:scale-105"
                 }`}
               >
-                <span className="text-base">⏱</span>
+                <Clock className="w-4 h-4" />
                 +5s
                 {addTimeCount > 0 && (
                   <span className="bg-white/25 rounded-full px-1.5 py-0.5 text-[10px] ml-0.5">
@@ -949,16 +951,18 @@ const SpellingAdventure: React.FC<SpellingAdventureProps> = ({ onScoreChange }) 
 
         {/* Target Word Display */}
         <div className="absolute top-6 left-1/2 -translate-x-1/2 z-40">
-          <div className="bg-gradient-to-r from-blue-500 to-purple-600 px-12 py-6 rounded-[32px] shadow-2xl border-4 border-white relative overflow-hidden group">
+          <div className="bg-[#0c0c12]/90 backdrop-blur-md px-12 py-5 rounded-3xl shadow-2xl border border-amber-500/30 relative overflow-hidden">
+            {/* Top accent line */}
+            <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: "linear-gradient(90deg,transparent,#f5a623,transparent)" }} />
             {/* Category Badge */}
-            <div className="absolute top-0 right-0 bg-white/20 px-3 py-1 rounded-bl-xl text-[10px] font-black text-white/90 uppercase tracking-widest backdrop-blur-sm">
+            <div className="absolute top-0 right-0 bg-amber-500/15 px-3 py-1 rounded-bl-xl text-[10px] font-black text-[#f5a623] uppercase tracking-widest">
               {category} • {DIFFICULTY_SETTINGS[difficulty].label}
             </div>
 
-            <p className="text-xs text-white/80 uppercase tracking-widest font-bold mb-2 text-center mt-2 group-hover:scale-105 transition-transform">
-              Spell this word:
+            <p className="text-[11px] text-[#f0ece3]/50 uppercase tracking-[0.3em] font-bold mb-1 text-center mt-2">
+              Spell this word
             </p>
-            <p className="text-5xl font-black tracking-[0.3em] text-white uppercase text-center drop-shadow-lg scale-100 transition-all">
+            <p className="text-6xl tracking-[0.18em] text-[#f0ece3] uppercase text-center" style={{ fontFamily: "'Bebas Neue', sans-serif", textShadow: "0 0 40px rgba(245,166,35,0.25)" }}>
               {currentWord}
             </p>
           </div>
@@ -969,17 +973,17 @@ const SpellingAdventure: React.FC<SpellingAdventureProps> = ({ onScoreChange }) 
             already shown by the tiles sitting in the tray. */}
         {isCorrect && (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[2px] animate-in fade-in duration-300">
-            <div className="bg-white rounded-[36px] shadow-2xl border-4 border-green-300 px-10 py-8 text-center max-w-sm mx-6 animate-in zoom-in-95 duration-300">
+            <div className="bg-[#0c0c12]/95 backdrop-blur-md rounded-3xl shadow-2xl border border-emerald-400/40 px-10 py-8 text-center max-w-sm mx-6 animate-in zoom-in-95 duration-300">
               <div className="flex justify-center mb-4">
-                <div className="bg-green-100 p-4 rounded-full">
-                  <CheckCircle2 className="w-12 h-12 text-green-500" />
+                <div className="bg-emerald-500/15 border border-emerald-400/40 p-4 rounded-full">
+                  <CheckCircle2 className="w-12 h-12 text-emerald-400" />
                 </div>
               </div>
-              <p className="text-4xl font-black tracking-[0.18em] text-gray-900 uppercase mb-3">
+              <p className="text-5xl tracking-[0.16em] text-[#f0ece3] uppercase mb-3" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
                 {currentWord}
               </p>
-              <div className="inline-flex items-center gap-2 bg-green-500 text-white px-5 py-2 rounded-full font-black mb-7">
-                <Star className="w-4 h-4 text-yellow-300 fill-current" />
+              <div className="inline-flex items-center gap-2 bg-emerald-500/15 text-emerald-300 border border-emerald-400/40 px-5 py-2 rounded-full font-black mb-7">
+                <Star className="w-4 h-4 text-[#f5a623] fill-current" />
                 Perfect! +
                 {Math.floor(
                   currentWord.length * 10 * DIFFICULTY_SETTINGS[difficulty].multiplier,
@@ -989,7 +993,7 @@ const SpellingAdventure: React.FC<SpellingAdventureProps> = ({ onScoreChange }) 
               </div>
               <button
                 onClick={nextWord}
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-black px-8 py-4 rounded-2xl shadow-xl flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-95 text-lg"
+                className="w-full bg-[#f5a623] hover:bg-amber-400 text-[#08080d] font-black px-8 py-4 rounded-2xl shadow-xl shadow-amber-500/20 flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-95 text-lg"
               >
                 <span>Next Word</span>
                 <ArrowRight className="w-5 h-5" />
@@ -999,28 +1003,32 @@ const SpellingAdventure: React.FC<SpellingAdventureProps> = ({ onScoreChange }) 
         )}
 
         {loading && !cameraError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 z-50">
+          <div className="absolute inset-0 flex items-center justify-center bg-[#08080d] z-50">
             <div className="flex flex-col items-center">
               <div className="relative">
-                <div className="w-16 h-16 border-4 border-gray-100 border-t-blue-600 rounded-full animate-spin" />
-                <Sparkles className="absolute -top-2 -right-2 text-purple-500 animate-pulse" />
+                <div className="w-16 h-16 border-4 border-white/10 border-t-[#f5a623] rounded-full animate-spin" />
+                <Sparkles className="absolute -top-2 -right-2 text-[#f5a623] animate-pulse" />
               </div>
-              <p className="mt-8 text-xl font-bold text-gray-600 tracking-tight">
-                Starting Adventure...
+              <p className="mt-8 text-2xl text-[#f0ece3]/80 tracking-wide" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
+                Starting Adventure…
               </p>
             </div>
           </div>
         )}
 
         {cameraError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-50 z-50 px-6">
-            <div className="bg-white rounded-3xl shadow-2xl border-2 border-red-200 px-8 py-7 max-w-md text-center">
-              <div className="text-5xl mb-3">📷</div>
-              <p className="text-xl font-black text-gray-800 mb-2">Camera Unavailable</p>
-              <p className="text-sm text-gray-600 mb-5">{cameraError}</p>
+          <div className="absolute inset-0 flex items-center justify-center bg-[#08080d] z-50 px-6">
+            <div className="bg-[#0c0c12]/95 backdrop-blur-md rounded-3xl shadow-2xl border border-red-400/40 px-8 py-7 max-w-md text-center">
+              <div className="flex justify-center mb-3">
+                <div className="bg-red-500/15 border border-red-400/40 p-3.5 rounded-full">
+                  <Clock className="w-8 h-8 text-red-300" />
+                </div>
+              </div>
+              <p className="text-2xl text-[#f0ece3] mb-2 tracking-wide" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>Camera Unavailable</p>
+              <p className="text-sm text-[#f0ece3]/55 mb-5">{cameraError}</p>
               <button
                 onClick={() => window.location.reload()}
-                className="bg-red-500 hover:bg-red-600 text-white font-bold px-6 py-3 rounded-full shadow-lg transition-all active:scale-95"
+                className="bg-[#f5a623] hover:bg-amber-400 text-[#08080d] font-bold px-6 py-3 rounded-full shadow-lg transition-all active:scale-95"
               >
                 Reload
               </button>
