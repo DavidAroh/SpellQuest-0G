@@ -40,3 +40,8 @@ _frames/
 
 # Rendered demo (upload to a host for the submission Video URL)
 SpellQuest-demo.mp4
+
+# Generated brand assets (upload to host; not shipped)
+spellquest-logo.png
+spellquest-thumb.png
+spellquest-cover*.png
