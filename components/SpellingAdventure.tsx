@@ -13,6 +13,7 @@ import {
   Star,
   Crown,
   HelpCircle,
+  Hand,
 } from "lucide-react";
 import { WORD_CATEGORIES } from "./wordLists";
 import { HowToPlay } from "./HowToPlay";
@@ -95,6 +96,8 @@ const SpellingAdventure: React.FC<SpellingAdventureProps> = ({ onScoreChange }) 
   const [score, setScore] = useState(0);
   const [highScore, setHighScore] = useState(0);
   const [trayWord, setTrayWord] = useState(""); // live letters in the tray, for the Sage
+  const [handDetected, setHandDetected] = useState(false); // for the "show your hand" hint
+  const handDetectedRef = useRef(false);
   const [timeLeft, setTimeLeft] = useState(30);
   const [addTimeCount, setAddTimeCount] = useState(0); // how many +5s used this word
 
@@ -366,6 +369,7 @@ const SpellingAdventure: React.FC<SpellingAdventureProps> = ({ onScoreChange }) 
       let pinchDistance = 1;
 
       if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        if (!handDetectedRef.current) { handDetectedRef.current = true; setHandDetected(true); }
         const landmarks = results.multiHandLandmarks[0];
         const idxTip = landmarks[8];
         const thumbTip = landmarks[4];
@@ -425,6 +429,7 @@ const SpellingAdventure: React.FC<SpellingAdventureProps> = ({ onScoreChange }) 
         drawHandSkeleton(ctx, landmarks, canvas.width, canvas.height, "rgba(130,177,255,0.55)", "#448aff");
       } else {
         // Hand lost — reset all gesture state
+        if (handDetectedRef.current) { handDetectedRef.current = false; setHandDetected(false); }
         handWasPresent.current = false;
         handSettleFrames.current = 0;
         pinchFrames.current = 0;
@@ -1032,6 +1037,18 @@ const SpellingAdventure: React.FC<SpellingAdventureProps> = ({ onScoreChange }) 
               >
                 Reload
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Hand-detection hint — clears once tracking locks on */}
+        {!loading && !cameraError && !handDetected && !isCorrect && (
+          <div className="absolute left-1/2 -translate-x-1/2 bottom-24 z-30 pointer-events-none">
+            <div
+              className="flex items-center gap-2.5 px-5 py-3 rounded-full bg-[#0c0c12]/80 backdrop-blur-md border border-amber-500/25 shadow-xl animate-pulse"
+            >
+              <Hand className="w-5 h-5 text-[#f5a623]" />
+              <span className="text-sm font-semibold text-[#f0ece3]/85">Show your hand to the camera…</span>
             </div>
           </div>
         )}
