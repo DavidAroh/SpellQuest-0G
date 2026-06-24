@@ -8,6 +8,7 @@ import {
   LEADERBOARD_ADDRESS,
   getConnectedState,
   submitScore,
+  fetchBestScore,
   loadPlayerName,
   shortAddress,
   txUrl,
@@ -33,6 +34,9 @@ const App: React.FC = () => {
     try {
       const st = await getConnectedState();
       if (!st || !st.onOgNetwork) return; // not connected → user can submit manually
+      // Only prompt a wallet signature when this run actually beats the on-chain best.
+      const best = await fetchBestScore(st.address);
+      if (score <= best) return;
       setToast({ status: 'submitting' });
       const name = loadPlayerName() || shortAddress(st.address);
       const hash = await submitScore(name, score);

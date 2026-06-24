@@ -240,6 +240,17 @@ export async function fetchLeaderboard(limit = 10): Promise<LeaderboardEntry[]> 
     .slice(0, limit);
 }
 
+/** Read a player's current best score from chain (0 if unconfigured/none). */
+export async function fetchBestScore(address: string): Promise<number> {
+  const contract = readContract();
+  if (!contract) return 0;
+  try {
+    return Number(await contract.bestScore(address));
+  } catch {
+    return 0;
+  }
+}
+
 /**
  * Submit a score on-chain. The contract only stores it if it beats the
  * player's previous best, so spamming is harmless. Returns the tx hash.

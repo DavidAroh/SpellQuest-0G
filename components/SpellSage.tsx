@@ -13,7 +13,7 @@
  * for a fresh hint.
  */
 import React, { useEffect, useRef, useState } from "react";
-import { getSageHint, usingOgCompute, SageEvent } from "../services/sage";
+import { getSageHint, SageEvent } from "../services/sage";
 import SageCharacter, { SageMood } from "./SageCharacter";
 
 interface Props {
@@ -50,6 +50,7 @@ export const SpellSage: React.FC<Props> = ({
   const [thinking, setThinking] = useState(false);
   const [mood, setMood] = useState<SageMood>("idle");
   const [pulse, setPulse] = useState(false);
+  const [ogLive, setOgLive] = useState(false); // true only after a real 0G Compute reply
 
   const prevWord = useRef(word);
   const prevTray = useRef(traySoFar);
@@ -67,15 +68,16 @@ export const SpellSage: React.FC<Props> = ({
     setThinking(true);
     thinkingRef.current = true;
     setMood("thinking");
-    const text = await getSageHint({ word, category, difficulty, timeLeft, traySoFar, event, streak: streak.current });
+    const reply = await getSageHint({ word, category, difficulty, timeLeft, traySoFar, event, streak: streak.current });
     // Ignore stale responses if a newer request started.
     if (id !== reqId.current) return;
     setThinking(false);
     thinkingRef.current = false;
+    setOgLive(reply.source === "og"); // badge reflects the *actual* source
     // Off-track on progress → worried, otherwise the event's natural mood.
     const offTrack = event === "progress" && !!traySoFar && !word.toUpperCase().startsWith(traySoFar.toUpperCase());
     setMood(offTrack ? "worried" : moodForEvent(event));
-    setLine(text);
+    setLine(reply.text);
     setPulse(true);
     setTimeout(() => setPulse(false), 600);
   };
@@ -171,12 +173,12 @@ export const SpellSage: React.FC<Props> = ({
           <span
             className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full inline-flex items-center gap-1"
             style={{
-              color: usingOgCompute ? "#34d399" : "rgba(240,236,227,0.55)",
-              background: usingOgCompute ? "rgba(52,211,153,0.12)" : "rgba(255,255,255,0.06)",
+              color: ogLive ? "#34d399" : "rgba(240,236,227,0.55)",
+              background: ogLive ? "rgba(52,211,153,0.12)" : "rgba(255,255,255,0.06)",
             }}
           >
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: usingOgCompute ? "#34d399" : "#f5a623" }} />
-            {usingOgCompute ? "0G Compute" : "AI Coach"}
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: ogLive ? "#34d399" : "#f5a623" }} />
+            {ogLive ? "0G Compute" : "AI Coach"}
           </span>
         </div>
         <p className="text-sm font-medium leading-snug min-h-[1.25rem]">

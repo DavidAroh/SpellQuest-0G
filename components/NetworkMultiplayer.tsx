@@ -246,6 +246,7 @@ export const NetworkMultiplayer: React.FC = () => {
 
   const setupConnListeners = useCallback((conn: DataConnection) => {
     conn.on("data", (data: any) => {
+      if (!data || typeof data !== "object") return; // ignore malformed/binary messages
       if (data.type === "START_WORD") {
         // Clear waiting overlay as soon as first word arrives
         setWaitingForWord(false);

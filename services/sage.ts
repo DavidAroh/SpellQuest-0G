@@ -141,15 +141,23 @@ async function inferViaOgCompute(ctx: SageContext): Promise<string> {
   return line.replace(/^["']|["']$/g, "");
 }
 
-/** Get a coaching line for the current game state. Never throws. */
-export async function getSageHint(ctx: SageContext): Promise<string> {
-  if (usingOgCompute) {
+export interface SageReply {
+  text: string;
+  /** Where the line actually came from — drives the honest UI badge. */
+  source: "og" | "local";
+}
+
+/** Get a coaching line for the current game state. Never throws. The `source`
+ *  reflects whether the reply *actually* came from 0G Compute, so the UI badge
+ *  can't claim "0G Compute" when the call silently fell back to local. */
+export async function getSageHint(ctx: SageContext): Promise<SageReply> {
+  if (COMPUTE_ENDPOINT) {
     try {
-      return await inferViaOgCompute(ctx);
+      return { text: await inferViaOgCompute(ctx), source: "og" };
     } catch {
-      // 0G broker not funded / endpoint down → graceful local fallback.
-      return localHint(ctx);
+      // 0G broker not funded / endpoint unreachable → graceful local fallback.
+      return { text: localHint(ctx), source: "local" };
     }
   }
-  return localHint(ctx);
+  return { text: localHint(ctx), source: "local" };
 }
