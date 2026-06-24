@@ -358,7 +358,7 @@ const SpellingAdventure: React.FC<SpellingAdventureProps> = ({ onScoreChange }) 
       ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
       ctx.restore();
 
-      ctx.fillStyle = "rgba(8, 8, 13, 0.82)";
+      ctx.fillStyle = "rgba(8, 8, 13, 0.58)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       let handPos: Point | null = null;

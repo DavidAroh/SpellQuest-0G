@@ -141,7 +141,7 @@ export const SpellSage: React.FC<Props> = ({
   if (!enabled) return null;
 
   return (
-    <div className="absolute bottom-4 left-4 z-40 flex items-end gap-2 max-w-[min(82vw,380px)] pointer-events-none">
+    <div className="absolute bottom-4 left-4 z-[55] flex items-end gap-2 max-w-[min(82vw,380px)] pointer-events-none">
       {/* Anime mascot — interactive: tap for a fresh hint */}
       <div className="shrink-0 pointer-events-auto" style={{ filter: "drop-shadow(0 6px 14px rgba(0,0,0,0.35))" }}>
         <SageCharacter mood={mood} onPoke={poke} size={88} />
