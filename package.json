@@ -11,6 +11,7 @@
     "og:test": "node server/og-test.mjs"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "ethers": "^6.17.0",
     "lucide-react": "^0.556.0",
     "peerjs": "^1.5.5",

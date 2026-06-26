@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Trophy, Loader2, CheckCircle2, ExternalLink } from 'lucide-react';
+import { Analytics } from '@vercel/analytics/react';
 import SpellingAdventure from './components/SpellingAdventure';
 import { MultiplayerAdventure } from './components/MultiplayerAdventure';
 import { NetworkMultiplayer } from './components/NetworkMultiplayer';
@@ -362,6 +363,7 @@ const App: React.FC = () => {
           <Leaderboard pendingScore={lastScore} onClose={() => setShowBoard(false)} />
         )}
         {toastEl}
+        <Analytics />
       </div>
     );
   }
@@ -393,6 +395,7 @@ const App: React.FC = () => {
         <Leaderboard pendingScore={lastScore} onClose={() => setShowBoard(false)} />
       )}
       {toastEl}
+      <Analytics />
     </div>
   );
 };
